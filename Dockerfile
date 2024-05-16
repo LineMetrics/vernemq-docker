@@ -1,19 +1,19 @@
 # Changed: added a build container
-FROM alpine:3.18 as build
+FROM alpine:3.19.1 as build
 
-ENV VERNEMQ_VERSION="1.13.0"
-# Release 1.13.0
-ENV VERNEMQ_DOCKER_VERSION="1055f9d3a465242a9969cd8401050aa52ac68121"
+ENV VERNEMQ_VERSION="2.0.0"
+# Release 2.0.0
+ENV VERNEMQ_DOCKER_VERSION="52de75c6167e014bc6d332cf2200e22613cea19a"
 
-RUN \
-  apk add \
-    git \
-    alpine-sdk \
-    erlang-dev \
-    snappy-dev \
-    bsd-compat-headers \
-    openssl-dev \
-    tzdata
+RUN apk update && \
+    apk add --no-cache \
+      git \
+      alpine-sdk \
+      erlang-dev \
+      snappy-dev \
+      bsd-compat-headers \
+      openssl-dev \
+      tzdata
 
 RUN git clone --depth 1 --branch ${VERNEMQ_VERSION} \
       https://github.com/vernemq/vernemq.git \
@@ -31,11 +31,19 @@ RUN wget -O /vernemq/etc/vm.args https://github.com/vernemq/docker-vernemq/raw/$
 RUN chown -R 10000:10000 /vernemq
 RUN chmod 0755 /vernemq/bin/vernemq.sh
 
-FROM alpine:3.18
+FROM alpine:3.19.1
 
-# Changed: added tzdate
-RUN apk --no-cache --update --available upgrade && \
-    apk add --no-cache ncurses-libs openssl libstdc++ jq curl bash snappy-dev nano tzdata && \
+RUN apk update && \
+    apk add --no-cache \
+      ncurses-libs \
+      openssl \
+      libstdc++ \
+      jq \
+      curl \
+      bash \
+      snappy-dev \
+      nano \
+      tzdata && \
     addgroup --gid 10000 vernemq && \
     adduser --uid 10000 -H -D -G vernemq -h /vernemq vernemq && \
     install -d -o vernemq -g vernemq /vernemq
@@ -44,7 +52,7 @@ RUN apk --no-cache --update --available upgrade && \
 ENV DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR="app=vernemq" \
     DOCKER_VERNEMQ_LOG__CONSOLE=console \
     PATH="/vernemq/bin:$PATH" \
-    VERNEMQ_VERSION="1.13.0"
+    VERNEMQ_VERSION="2.0.0"
 WORKDIR /vernemq
 
 # Changed: removed COPY commands, replaced by CURL downloads above
